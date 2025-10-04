@@ -15,7 +15,8 @@ package org.openhab.binding.groupepsa.internal.bridge;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 
 /**
- * The {@link GroupePSABridgeConfiguration} class contains fields mapping thing configuration parameters.
+ * The {@link GroupePSABridgeConfiguration} class contains fields mapping thing
+ * configuration parameters.
  *
  * @author Arjan Mels - Initial contribution
  */
@@ -26,6 +27,7 @@ public final class GroupePSABridgeConfiguration {
     private String password = "";
     private String clientId = "";
     private String clientSecret = "";
+    private String authorizationCode = "";
 
     private Integer pollingInterval = 5;
 
@@ -78,5 +80,13 @@ public final class GroupePSABridgeConfiguration {
 
     public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
+    }
+
+    public String getAuthorizationCode() {
+        return authorizationCode;
+    }
+
+    public void setAuthorizationCode(String authorizationCode) {
+        this.authorizationCode = authorizationCode;
     }
 }

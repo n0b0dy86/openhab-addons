@@ -67,6 +67,8 @@ public class GroupePSABridgeHandler extends BaseBridgeHandler {
     private String password = "";
     private String clientId = "";
     private String clientSecret = "";
+    private String authorizationCode = "";
+    private @Nullable GroupePSAAuthenticator authenticator;
 
     private @Nullable GroupePSAConnectApi groupePSAApi;
 
@@ -108,6 +110,7 @@ public class GroupePSABridgeHandler extends BaseBridgeHandler {
         password = bridgeConfiguration.getPassword();
         clientId = bridgeConfiguration.getClientId();
         clientSecret = bridgeConfiguration.getClientSecret();
+        authorizationCode = bridgeConfiguration.getAuthorizationCode();
 
         final Integer pollingIntervalM = bridgeConfiguration.getPollingInterval();
 
@@ -129,8 +132,11 @@ public class GroupePSABridgeHandler extends BaseBridgeHandler {
             VendorConstants localVendorConstants = VendorConstants.valueOf(vendor);
             vendorConstants = localVendorConstants;
 
-            oAuthService = oAuthFactory.createOAuthClientService(thing.getUID().getAsString(), localVendorConstants.url,
-                    null, clientId, clientSecret, localVendorConstants.scope, true);
+            oAuthService = oAuthFactory.createOAuthClientService(thing.getUID().getAsString(),
+                    localVendorConstants.tokenUrl, localVendorConstants.authorizeUrl, clientId, clientSecret,
+                    localVendorConstants.scope, true);
+
+            authenticator = new GroupePSAAuthenticator(userName, password, clientSecret, clientId, oAuthService);
 
             groupePSAApi = new GroupePSAConnectApi(httpClient, this, clientId, localVendorConstants.realm);
 
@@ -189,8 +195,13 @@ public class GroupePSABridgeHandler extends BaseBridgeHandler {
         try {
             AccessTokenResponse result = localOAuthService.getAccessTokenResponse();
             if (result == null) {
-                result = localOAuthService.getAccessTokenByResourceOwnerPasswordCredentials(userName, password,
-                        localVendorConstants.scope);
+                if (authorizationCode.isBlank()) {
+                    final String url = authenticator.getAuthorizationURL(localVendorConstants.scope);
+                    updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_PENDING,
+                            "Get authorization code from URL: " + url);
+                    throw new GroupePSACommunicationException("Missing authorization code: " + url);
+                }
+                return authenticator.newAccessToken(authorizationCode);
             }
             return result.getAccessToken();
         } catch (OAuthException | IOException | OAuthResponseException e) {
@@ -209,18 +220,19 @@ public class GroupePSABridgeHandler extends BaseBridgeHandler {
 
     /**
      * @return A list of vehicles
-     * @throws GroupePSACommunicationException In case the query cannot be executed
-     *             successfully
+     * @throws GroupePSACommunicationException
+     *             In case the query cannot be executed successfully
      */
     public @Nullable List<Vehicle> getVehicles() throws GroupePSACommunicationException {
         return getAPI().getVehicles();
     }
 
     /**
-     * @param vin The VIN to query
+     * @param vin
+     *            The VIN to query
      * @return A detailed status of the mower with the specified id
-     * @throws GroupePSACommunicationException In case the query cannot be executed
-     *             successfully
+     * @throws GroupePSACommunicationException
+     *             In case the query cannot be executed successfully
      */
     public @Nullable VehicleStatus getVehicleStatus(String vin) throws GroupePSACommunicationException {
         return getAPI().getVehicleStatus(vin);

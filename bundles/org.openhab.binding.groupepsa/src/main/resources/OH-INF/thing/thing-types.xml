@@ -51,6 +51,11 @@
 				<description>The client secret for API access: can normally left at the default value. (see:
 					https://developer.groupe-psa.io/webapi/b2c/quickstart/connect/#article)</description>
 			</parameter>
+			<parameter name="authorizationCode" type="text" required="false">
+				<advanced>true</advanced>
+				<label>Authorization Code for API access</label>
+				<description>Open the following URL in a browser, get the authorization code and paste it here</description>
+			</parameter>
 		</config-description>
 
 	</bridge-type>

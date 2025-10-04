@@ -88,18 +88,20 @@ public class GroupePSABindingConstants {
     public static final String CHANNEL_ELECTRIC_CHARGING_NEXTDELAYEDTIME = "electric#chargingNextDelayedTime";
 
     public enum VendorConstants {
-        PEUGEOT("https://idpcvs.peugeot.com/am/oauth2/access_token", "clientsB2CPeugeot"),
-        CITROEN("https://idpcvs.citroen.com/am/oauth2/access_token", "clientsB2CCitroen"),
-        DS("https://idpcvs.driveds.com/am/oauth2/access_token", "clientsB2CDS"),
-        OPEL("https://idpcvs.opel.com/am/oauth2/access_token", "clientsB2COpel"),
-        VAUXHALL("https://idpcvs.vauxhall.co.uk/am/oauth2/access_token", "clientsB2CVauxhall");
+        PEUGEOT("https://idpcvs.peugeot.com/am/oauth2/", "clientsB2CPeugeot"),
+        CITROEN("https://idpcvs.citroen.com/am/oauth2/", "clientsB2CCitroen"),
+        DS("https://idpcvs.driveds.com/am/oauth2/", "clientsB2CDS"),
+        OPEL("https://idpcvs.opel.com/am/oauth2/", "clientsB2COpel"),
+        VAUXHALL("https://idpcvs.vauxhall.co.uk/am/oauth2/", "clientsB2CVauxhall");
 
-        public final String url;
+        public final String tokenUrl;
+        public final String authorizeUrl;
         public final String realm;
         public final String scope;
 
         VendorConstants(String url, String realm) {
-            this.url = url;
+            this.tokenUrl = url + "access_token";
+            this.authorizeUrl = url + "authorize";
             this.realm = realm;
             this.scope = "profile openid";
         }
