@@ -23,8 +23,6 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 @NonNullByDefault
 public final class GroupePSABridgeConfiguration {
     private String vendor = "";
-    private String userName = "";
-    private String password = "";
     private String clientId = "";
     private String clientSecret = "";
     private String authorizationCode = "";
@@ -48,22 +46,6 @@ public final class GroupePSABridgeConfiguration {
 
     public void setVendor(String vendor) {
         this.vendor = vendor;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getClientId() {

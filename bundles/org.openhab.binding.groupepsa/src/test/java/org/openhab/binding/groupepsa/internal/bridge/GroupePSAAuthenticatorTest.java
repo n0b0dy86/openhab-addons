@@ -14,8 +14,12 @@ package org.openhab.binding.groupepsa.internal.bridge;
 
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openhab.binding.groupepsa.internal.rest.exceptions.GroupePSACommunicationException;
@@ -36,12 +40,22 @@ import org.openhab.core.test.storage.VolatileStorageService;
  */
 class GroupePSAAuthenticatorTest {
 
-    private final String username = "real";
-    private final String password = "real";
+    private static ScheduledExecutorService EXECUTOR_SERVICE;
+
     private final String clientId = "07364655-93cb-4194-8158-6b035ac2c24c";
     private final String clientSecret = "F2kK7lC5kF5qN7tM0wT8kE3cW1dP0wC5pI6vC0sQ5iP5cN8cJ8";
 
     private OAuthClientService oAuthClientService;
+
+    @BeforeAll
+    public static void setup() {
+        EXECUTOR_SERVICE = Executors.newScheduledThreadPool(2);
+    }
+
+    @AfterAll
+    public static void tearDown() {
+        EXECUTOR_SERVICE.shutdown();
+    }
 
     @BeforeEach
     public void setUp() {
@@ -58,8 +72,7 @@ class GroupePSAAuthenticatorTest {
 
     @Test
     void testAuthorizationURL() throws GroupePSACommunicationException {
-        final GroupePSAAuthenticator authenticator = new GroupePSAAuthenticator(username, password, clientSecret,
-                clientId, oAuthClientService);
+        final GroupePSAAuthenticator authenticator = new GroupePSAAuthenticator(oAuthClientService, EXECUTOR_SERVICE);
         final String token = authenticator.getAuthorizationURL("profile openid");
         Assertions.assertNotNull(token);
         Assertions.assertFalse(token.isBlank());

@@ -63,12 +63,11 @@ public class GroupePSABridgeHandler extends BaseBridgeHandler {
 
     private String vendor = "";
     private @Nullable VendorConstants vendorConstants;
-    private String userName = "";
-    private String password = "";
     private String clientId = "";
     private String clientSecret = "";
     private String authorizationCode = "";
     private @Nullable GroupePSAAuthenticator authenticator;
+    private @Nullable String lastAuthorizationCode;
 
     private @Nullable GroupePSAConnectApi groupePSAApi;
 
@@ -106,8 +105,6 @@ public class GroupePSABridgeHandler extends BaseBridgeHandler {
         GroupePSABridgeConfiguration bridgeConfiguration = getConfigAs(GroupePSABridgeConfiguration.class);
 
         vendor = bridgeConfiguration.getVendor();
-        userName = bridgeConfiguration.getUserName();
-        password = bridgeConfiguration.getPassword();
         clientId = bridgeConfiguration.getClientId();
         clientSecret = bridgeConfiguration.getClientSecret();
         authorizationCode = bridgeConfiguration.getAuthorizationCode();
@@ -116,10 +113,6 @@ public class GroupePSABridgeHandler extends BaseBridgeHandler {
 
         if (vendor.isEmpty()) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "@text/conf-error-no-vendor");
-        } else if (userName.isEmpty()) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "@text/conf-error-no-username");
-        } else if (password.isEmpty()) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "@text/conf-error-no-password");
         } else if (clientId.isEmpty()) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "@text/conf-error-no-clientid");
         } else if (clientSecret.isEmpty()) {
@@ -136,7 +129,7 @@ public class GroupePSABridgeHandler extends BaseBridgeHandler {
                     localVendorConstants.tokenUrl, localVendorConstants.authorizeUrl, clientId, clientSecret,
                     localVendorConstants.scope, true);
 
-            authenticator = new GroupePSAAuthenticator(userName, password, clientSecret, clientId, oAuthService);
+            authenticator = new GroupePSAAuthenticator(oAuthService, scheduler);
 
             groupePSAApi = new GroupePSAConnectApi(httpClient, this, clientId, localVendorConstants.realm);
 
@@ -195,16 +188,29 @@ public class GroupePSABridgeHandler extends BaseBridgeHandler {
         try {
             AccessTokenResponse result = localOAuthService.getAccessTokenResponse();
             if (result == null) {
-                if (authorizationCode.isBlank()) {
+                if (authorizationCode.isBlank() || authorizationCode.equals(lastAuthorizationCode)) {
                     final String url = authenticator.getAuthorizationURL(localVendorConstants.scope);
                     updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_PENDING,
                             "Get authorization code from URL: " + url);
                     throw new GroupePSACommunicationException("Missing authorization code: " + url);
                 }
-                return authenticator.newAccessToken(authorizationCode);
+                final String accessToken = authenticator.newAccessToken(authorizationCode);
+                lastAuthorizationCode = authorizationCode;
+                return accessToken;
             }
             return result.getAccessToken();
-        } catch (OAuthException | IOException | OAuthResponseException e) {
+        } catch (OAuthException | OAuthResponseException e) {
+            if (authorizationCode.isBlank() || authorizationCode.equals(lastAuthorizationCode)) {
+                final String url = authenticator.getAuthorizationURL(localVendorConstants.scope);
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_PENDING,
+                        "Get authorization code from URL: " + url);
+                throw new GroupePSACommunicationException(
+                        "AccessToken could not be refreshed! Missing authorization code: " + url);
+            }
+            final String accessToken = authenticator.newAccessToken(authorizationCode);
+            lastAuthorizationCode = authorizationCode;
+            return accessToken;
+        } catch (IOException e) {
             throw new GroupePSACommunicationException("Unable to authenticate: " + getRootCause(e).getMessage(), e);
         }
     }

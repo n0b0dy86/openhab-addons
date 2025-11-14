@@ -24,14 +24,6 @@
 					<option value="VAUXHALL">Vauxhall</option>
 				</options>
 			</parameter>
-			<parameter name="userName" type="text" required="true">
-				<label>User Name</label>
-				<description>The user name for the mypeugot/mycitroen/myds/myopel/myvauxhall website or app</description>
-			</parameter>
-			<parameter name="password" type="text" required="true">
-				<context>password</context>
-				<description>The password for the given user</description>
-			</parameter>
 			<parameter name="pollingInterval" type="integer" required="false" unit="min">
 				<label>Polling Interval</label>
 				<default>60</default>
